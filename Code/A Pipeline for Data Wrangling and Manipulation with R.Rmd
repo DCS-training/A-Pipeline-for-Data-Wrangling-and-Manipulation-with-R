@@ -7,11 +7,14 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#install.packages("pacman")
+#install.packages("pacman") 
+# uncomment the above line of code and run it if p_load functions below do not work.
+install.packages(qpcR) # Data merging tools (we only install this package, but no need to run the library command)
+
 pacman::p_load(tidyverse) # Useful packages for data tidying
 pacman::p_load(gt) # Useful package for making pretty tables
 pacman::p_load(naniar) # Visualising and exploring missing data
-pacman::p_load(missMethods) # Missing data methods and imputing
+pacman::p_load(missMethods) # Missing data methods and imputing missing data
 ```
 
 ## Tidying data
@@ -42,9 +45,11 @@ For today, our interpretiation of tidy data is informed on the journal article o
 
 This structure of tidy data provides us with a standardised format for working with data. Is it important to be aware that tidy data is aimed at making our life easier as researchers. It may appear less visually appealing - but it allows us to communicate to R what we want it to do with the analysis with greater easer.
 
-Now data tidying can come across as a rather dull process, and I appreciate this. It has been argued that 80% of the time spent on data analysis is actually spent on cleaning and preparing our data (Dasu & Johnson, 2003). It's the monotony of preperation, the mandatory precursos to the thrill of running the analysis and making our contributions to the field. Whilst there are dull elements, I would argue that data tidying in R is akin to practicing fundamental techniques in Sport; this are the fundamental skills that that progresses you to being a professional athlete (in statistical programming...).
+Now data tidying can come across as a rather dull process, and I appreciate this. It has been argued that 80% of the time spent on data analysis is actually spent on cleaning and preparing our data (Dasu & Johnson, 2003). It's the monotony of preperation, the mandatory precursos to the thrill of running the analysis and making our contributions to the field. Whilst there are dull elements, I would argue that data tidying in R is akin to practicing fundamental techniques in Sport; this are the fundamental skills that that progresses you to being a professional-athlete (in statistical programming.).
 
-If that hasn't convinced you, there are other benefits that will. My favourite aspect links to reproducibility. As R is a coding language, our entire tidying script also exists as a lab book/notebook of the data preparation. No need to keep track of all our steps, as the script is the command list of all our steps. If a mistake is made at any point in the process, we don't need to retrace our steps through version control to correct it; we simply find the command and edit it. And if we have updates to our data, do we need to restart our entire process and repeat our steps? Nope. All we need to do is re-run our updated dataset through the script.
+If that hasn't convinced you, there are other benefits that will. My favourite aspect links to reproducibility. As R is a coding language, our entire tidying script also exists as a lab book/notebook of the data preparation. No need to keep track of all our steps, as the script is the command list of all our steps. If a mistake is made at any point in the process, we don't need to retrace our steps through version control to correct it; we simply find the command and edit it. And if we have updates to our data, do we need to restart our entire process and repeat our steps? Nope.
+
+All we need to do is re-run our updated dataset through the script.
 
 Additionally, when tidying data in R, your raw data stays in its raw format. It wont be changed. Instead, we are working with a copied object that only exists in R. This means we can experiment and try different ways of solving our data manipulation challenges without fear of accidentally sabotaging our research. It's liberating.
 
@@ -54,9 +59,9 @@ I have one final tip before we get started today (and I will repeat again at the
 
 Ok. Time to get started.
 
-## 1. Importing the data
+## Importing the data
 
-Before we tidy our data, we need to upload our data! For anyone who is using Qualtrics in their own research, I reccomend choosing the "Use numeric values" option when it comes to exporting the data. This simplifies our life when it comes to calculating scores from our questionnaire in later steps. Additionally, we want to download the file as a CSV (comma separated values).
+Before we tidy our data, we need to upload our data! For anyone who is using Qualtrics in their own research, I recommend choosing the "Use numeric values" option when it comes to exporting the data. This simplifies our life when it comes to calculating scores from our questionnaire in later steps. Additionally, we want to download the file as a CSV (comma separated values).
 
 CSV's can imported into almost any software, so it offers near endless versatility. Additionally it's simple design means it will be robust to any system updates or pricing plan changes (open it up in a notepad document, and you will see that the first value on every line is the column name, and a comma is used to separate every row).
 
@@ -65,20 +70,33 @@ Anyhow, onto uploading the dataset.
 ```{r}
 library(readr)
 
-data <- read_csv("CDCS training dataset_numeric_updated.csv")
+data <- read_csv("https://raw.github.com/DCS-training/A-Pipeline-for-Data-Wrangling-and-Manipulation-with-R/main/Data/TimePoint1_CDCS%20training%20dataset_numeric.csv")
 ```
 
 Job done!
 
 However, a quick check of the dataset will reveal that we have many variables we are not interested in for our analysis, or for our tidying. We want to declutter our space to make our life easier.
 
-This next step will use `%>%` (aka: the "pipe"). The pipe is an amazing tool for data tidying, as it allows us to link multiple commands and features straight to our data. Think of it as a command to R that translates to "Take this thing before me, and do the thing after me" .
+This next step will use `%>%` (aka: the "pipe"). The pipe is an amazing tool for data tidying, as it allows us to link multiple commands and features straight to our data. Think of it as a command to R that translates to "Take this thing before me, and do the thing after me". 
+
+Here, we are going to pipe the output of the `head()` function into `gt()`. This will take the first 6 rows from `head()` and make it prettier and more navigable with `gt()`. 
 
 ```{r}
 # Checking data
 head(data) %>%  # head allows us view the first 6 rows
   gt() # the head command has been piped into gt() - all this does is make the output look prettier.
 ```
+
+## Choosing our useful variables
+
+Before moving further, we'll notice a number of columns here that may not be useful to us as researchers. So, to de-clutter our dataset, we going to focus on a selection of the variables we want with the `select()` function.
+
+To use `select()` we type the name of our dataset, pipe it (`%>%`) into `select()`, and write the variable names we want to keep. 
+
+If you are working with a large dataset where only a small handful of variables need removing, we type the minus symbol (`-`) in-front of the variable we want to remove.
+
+In this case we are working with a smaller dataset, so will choose to keep what we want.
+
 
 ```{r}
 # Choosing our variables
@@ -97,25 +115,101 @@ data_1 <- data %>% # Assigning new object for a new step
          )
 ```
 
-Easy! Now to inspect our data to see if its ready to move on:
+## Creating a time point variable
+
+As we are working with multiple datasets for different timepoints today, we need to assign a new variable to let us identify which time point this dataset belongs to. For this, we will use the `mutate()` function to create a new variable called "Time_Point", and assign the value of "1" to it.
 
 ```{r}
 
-summary(data_1) # summary to view summary of each variable
-glimpse(data_1) # Describes data structure and shows first row
-```
+data_1 <- data_1 %>%
+  mutate( #mutate allows us to make new variables/change existing variables
+    Time_Point = "1"
+  )
 
-Turns out its a mess. Double checking with head() can help us see what is going on. 
+
+## Testing data
+
+head(data_1$Time_Point) #first 6 rows of Time_Point
+
+tail(data_1$Time_Point) #last 6 rows of Time_Point
+
+```
+## Working with repeated measures
+
+We will now import the data from our second data collection. The motivation here is a pragmatic one, as we can bind both data sets to simultaneously tidy both time points together. 
+
+### Importing second dataset
 
 ```{r}
-head(data_1) %>% gt()
+T2_data <- read_csv("https://raw.github.com/DCS-training/A-Pipeline-for-Data-Wrangling-and-Manipulation-with-R/main/Data/TimePoint2_CDCS%20training%20dataset_numeric.csv") %>% 
+  select(	# Selecting same variables from earlier to make sure our datasets are the same.
+    `Duration (in seconds)`, IPAddress, 
+         Progress, 
+        Q_RecaptchaScore, 
+        Q2:Q9 
+         ) %>%
+  mutate(
+    Time_Point = "2" # Here we assign "2" to signify the second time point.
+    )
+
+head(T2_data) 
 ```
- Turns out the first 2 rows contain meta data describing how the data was collected. This wont be useful for our analysis, and it's preventing us from working with our data. So we need to remove it. This will involve using `base R` coding. Generally, I prefer `tidyverse` coding, as it more functional, less cluttered, easier to communicate, and less code nerdy. But sometimes it is useful for quick easy fixes such as this.
+
+### Preparing second dataset for merging
+
+We are almost ready to merge both dataset. We'll just need to do some initial tidying to our second dataset, as the first 2 rows are not useful to us, as they only contain metadata. Keeping them in would confuse R, as there would be different data formats in the same column. So, lets remove them with some base R coding.
+
+```{r}
+T2_data_prep <- T2_data[-c(1,2), ] 
+# With base R, we remove data with - . To values on the left of the comma in the square brackets, we are removing rows. Whilst adding number to the right hand side of the comma would affect the columns. 
+
+# Inspect output
+head(T2_data_prep)
+```
+
+Now that our initial 2 rows are removed, we can bind the rows of this dataset vertically with our first dataset. We do this with `r.bind()` function. 
+
+```{r}
+
+combined_data <- rbind(data_1, T2_data_prep)
+
+# Inspect results
+view(combined_data) # great for small datasets, not advised for larger datasets
+
+## We're looking to see that our Time_point values make sense by viewing the first 6 and the last 6 rows of data with head() and tail().
+head(combined_data) %>% gt()  
+tail(combined_data) %>% gt()
+
+```
+
+*Note: this approach only works the questionnaire is identical at both time points. If there are differences in the questions asked, then you will need to prepare separate scripts for both dataset before merging.
+
+## Inspecting the data
+
+Both datasets are merged in what we would call a long format (Where our participants have multiple rows for different time points). We will discuss at the end how to transform to wide data if needed, but for our steps of tidying and analysing in R, using the long format will make our life easier.
+
+Anyhow, now that we have merged our data, we need to inspect our data to see if its ready to move on, and to assess what changes we should do next.
+
+```{r}
+
+summary(combined_data) # summary to view summary of each variable
+
+glimpse(combined_data) # Describes data structure and shows first row
+```
+
+Turns out its a mess. Everything is labelled as `character`. Whilst in reality, we know our data contains numerical values. Double checking with head() can help us see what is going on. 
+
+```{r}
+head(combined_data) %>% gt()
+
+tail(combined_data) %>% gt()
+```
+Turns out the first 2 rows contain meta data describing how the data was collected. This wont be useful for our analysis, and it's preventing us from working with our data. So we need to remove it. This will involve using `base R` coding. Generally, I prefer `tidyverse` coding, as it more functional, less cluttered, easier to communicate, and less code nerdy. But sometimes it is useful for quick easy fixes such as this.
  
 ```{r}
 # removing second row with base R 
 
-data_2 <- data_1[-c(1,2), ] # This is why I don't like base R, as square brackets are scary. Square brackets tells R to work with values based on row numbers and column numbers. 
+data_2 <- combined_data[-c(1,2), ] # This is why I don't like base R, as square brackets are scary. Square brackets tells R to work with values based on row numbers and column numbers. 
 
 ## The values behind the comma refer to row numbers. The values after the comma refer to column numbers. 
 
@@ -124,6 +218,7 @@ data_2 <- data_1[-c(1,2), ] # This is why I don't like base R, as square bracket
 ## c is used when we want to combine multiple commands
 
 head(data_2)
+tail(data_2)
 summary(data_2)
 glimpse(data_2)
 
@@ -139,22 +234,24 @@ data_3 <- data_2 %>%
   mutate( #mutate is used to change our data. Very useful tool
     across(c(`Duration (in seconds)`, Progress, Q_RecaptchaScore,
                     Q5, Q8_1:Q8_7), ~ as.numeric(.)) 
+# using across() allows us to apply the same change to multiple columns. Here we are selecting multiple variables with c(), and using ~as.numeric() for R to force them to behave as numeric variables.
   )
 
 summary(data_3)
 glimpse(data_3)
+tail(data_3) %>% gt()
 ```
 
-### Recoding values
+## Recoding values
 
-You will have noticed that some columns look like numbers, yet were not changed. This is because I know these values were orignially categorical choices. 
+You will have noticed that some columns look like numbers, yet were not changed. This is because I know these values were originally categorical choices. 
 
-Unfortunately, Qualtrics has translated them to numbers. We need to reassing their labels, so that we can more clearly understand what we are working with. 
+Unfortunately, Qualtrics has translated them to numbers. We need to reassign their labels, so that we can more clearly understand what we are working with. 
 To help in the next step, we are going to open the "Use choice text" exported version from Qualtrics. This helps us identify the correct labels for recoding our data.
 
 ```{r}
 
-data_key <- read_csv("CDCS training dataset_text_updated.csv") # uploading choice text version of data
+data_key <- read_csv("https://raw.github.com/DCS-training/A-Pipeline-for-Data-Wrangling-and-Manipulation-with-R/main/Data/TimePoint1_CDCS%20training%20dataset_text.csv") # uploading choice text version of data
 
 data_key <- data_key[-c(1,2), ] # removing first two rows again
 
@@ -165,23 +262,41 @@ data_key <- data_key %>%
 
 summary(data_key) # viewing summary
 ```
-### Combining the data
+## Combining the data
+
+Time to merge our data so that our response options can replace our old numeric responses. Now this next step is a little convoluted - I appreciate that. There are multiple functions being used together. Let's try to work through it step by step. Worst case scenario, you can copy and paste the code and update it to match your own work... Honestly, I wish I could find a simpler way to make this work! But for now, this does what I want it to do.
 
 ```{r}
 data_4 <- data_3 %>%
-  select(-matches(names(data_key))) %>%  # Remove columns in data_3 that are in data_key
-  bind_cols(select(data_key, matches(names(data_key)))) 
+  mutate(
+    Q4 = as.factor(case_when(
+      Q4 == "1" ~ "Male",
+      Q4 == "2" ~ "Female",
+      Q4 == "3" ~ "Non-binary / third gender",
+      Q4 == "4" ~ "Prefer not to say"
+      )),
+    Q7 = as.factor(case_when(
+      Q7 == "1" ~ "Regional",
+      Q7 == "2" ~ "National",
+      Q7 == "3" ~ "International"
+      ))
+    )
+             
 
 summary(data_4)
 glimpse(data_4)
+
 ```
-### Giving meaningful item names to columns
+
+## Giving meaningful item names to columns
 
 Almost ready to filter the data. However, it's becoming apparent that the column names are all vague. This is a recipe for mistakes. It is best practice to have meaningful and clear variable names - as a bonus: in R we have no character length limits, so names can be as long as we need them to be. 
 
 Time to fix the issue.
 
 We're going to be sneaky here, and we're going to extract column names from an earlier dataset so that we have a reference point to turn to.
+
+### Extracting Column names
 
 ```{r}
 # extracting column names
@@ -223,8 +338,6 @@ summary(data_5)
 ```
 
 
-
-
 ## Initial filtering of data
 
 In a perfect world, only eligible participants would be part of our data. Everyone will have provided their consent before filling out their surveys, and only unwanted participants will not have taken part. 
@@ -244,16 +357,21 @@ For filtering, we can either filter in stages, or all at once: It really depends
 
 My preference is to combine multiple filters to any requirements on eligibility and ethical data use. From there, I will apply additional filters if needed.
 
+### Filtering with R
+
 ```{r}
 
+# Checking potential values
 unique(data_5$Consent) # checking consent values
+unique(data_5$Age) # Checking our Age values to see if these are realistic
 
+# Filtering out inappropriate values
 data_6 <- data_5 %>%
   filter(
     Consent == "1,2,3,4,5,6" & # as participants had to tick all boxes to show full consent, we only want to keep those we did tick all boxes.
     (Competition_level == "International" | Competition_level == "National") & # Filtering to keep either "International" or "National" athletes.
     Age > 18, # For this study, our participants had to be at least 18 years old to participate. Despite our requirements, it seems some under 18's got through.
-    Age < 9999 # Someone inpputed an unrealistic value for age. WE decide to remove them, or consider if imputation may be appropriate.
+    Age < 9999 # Someone inputed an unrealistic value for age. WE decide to remove them, or consider if imputation may be appropriate.
     ) 
 
 ## Checking our filtered data 
@@ -346,15 +464,31 @@ summary(data_9$Country_code)
 
 Missing values are complex to deal with. They can bias our results if we remove them. They can bias our results if we impute new values to address them. What's more, they can decimate our power if we exclude them. 
 
+Here, we will be using tools from the useful [`naniar`](https://naniar.njtierney.com/) package to help us understand our missing data. 
+
 ```{r}
+# Statistical test of missing data to determine patterns of randomness
 data_9 %>% 
   select(AIMS_1:AIMS_7) %>%
   mcar_test()
 
-data_9 %>% select(-Elite_sport_experiences) %>% pct_miss()
+### Beware of this test: its results will unreliable if sample is too small or too large... and unfortunatley sample size is subjective...
 
+## Better to consider pragmatic approaches
 
-data_9 %>% select(-Elite_sport_experiences) %>%gg_miss_var()
+### Proportion of missing data
+
+data_9 %>% 
+  select(-Elite_sport_experiences) %>% # this question was an optional qualitative response. Missing values here do not concern us.
+ pct_miss() # provides overall missing data percentage.
+
+### Missing data by variable
+
+data_9 %>% 
+  select(-Elite_sport_experiences) %>%
+  gg_miss_var()
+
+### Visualising missing data with geom_miss_point() from naniar
 
 ggplot(data_9,
        aes(
@@ -378,8 +512,6 @@ Under conditions where removing missing data can bias results or detrimentally i
 
 When using psychomtric measures, the row-wise mean imputation method can perform just as effectively as more complex MICE imputation methods. Whatsmore the code and the results are much easier to comprehend. And we can still keep track of which values were originally missing using `naniar` `bind_shadow()` function. 
 
-
-
 ### Missing data label
 
 ```{r}
@@ -387,7 +519,11 @@ data_10 <- data_9 %>% bind_shadow()
 summary(data_10)
 ```
 
-### Imputing with row-wise mean 
+### Imputing with row-wise/individual mean 
+
+For demonstrative purposes, we are going to impute (stats word for replace) the missing values with person level mean value. Note that the reccomended best practice is to use imputation methods such as [Multiple Imputation Chained Equations (MICE)](https://amices.org/mice/) or [Full Information Maximum Likelihood (FIML)](https://real-statistics.com/handling-missing-data/full-information-maximum-likelihood-fiml/) - but these are very complex techniques to run correctly. 
+
+However, it has been argued that using person level mean can be appropriate when using Likert response meausres, so long as it is used within the scale/subscale of the measure [(Shrive et al., 2006)](https://link.springer.com/article/10.1186/1471-2288-6-57). Our motivation for using it today is that it allows for simpler and clearer communication of the imputation method whilst also providing plausible imputation results. 
 
 ```{r}
 ### Step 1 - gather AIMS items
@@ -423,9 +559,10 @@ ggplot(data_11,
        aes(y = AIMS_7, x = (AIMS_1+AIMS_2 + AIMS_3+ AIMS_4+ AIMS_5 +AIMS_6), color = AIMS_7_NA )) +
   geom_point(
     position = "jitter", # jittering so points are moved slightly - easier to see if overlap
-    alpha = .7 # changing transparency with alpha to help see potential overlap
+    alpha = .7, # changing transparency with alpha to help see potential overlap
+    size = 3 # making points bigger so easier to see
     ) +
-  facet_wrap(~AIMS_7_NA)
+  labs(title = "Imputed values plot")
 ```
 
 
@@ -445,9 +582,42 @@ data_12 <- data_11 %>%
 
 summary(data_12$AIMS_total)
 ```
+## Long to Wide, and back to long again
 
+Now its time to play with reformatting our data. For the majority of the time when we work in R, we want our data to be in the long format - and so far it is. This makes it easier for us to communicate to R what we want it to do. However, there are times when we might need our data to be wide. And so, being able to convert our data between wide and long is useful. 
 
+### Long to wide transformation
 
+For transforming our data from its current long format into a wide format, we will be using the `pivot_wider()` function. 
+
+```{r}
+
+wide_data <- data_12 %>%
+  select( Time_Point, ID_code, Age, Gender, Country_code , Competition_level, AIMS_1:AIMS_7, AIMS_total) %>%
+  pivot_wider(
+    values_from = (c( Age, Gender, Country_code , 
+                      Competition_level, AIMS_1:AIMS_7, AIMS_total)), # select the values needed
+    names_sep = ".", # As we use _ in our measure name, we need to assign a new seperator
+    names_from = Time_Point, # provide time label from timepoint
+    id_cols = ID_code # Assign ID - very important
+  ) 
+
+view(wide_data)
+```
+
+### Wide back to long
+
+Just as we transformed from long to wide, lets go back from wide to long with `pivot_longer()`. 
+
+```{r}
+long_data <- wide_data %>%
+ pivot_longer(
+    cols = everything(), # All columns 
+    names_to = c(".value", "Time_Point"), # Split column names into value and Time_Point
+    names_pattern = "^(.*)\\.(.*)$", # Regular expression to match pattern
+    values_drop_na = TRUE # Optional: drop rows with NA values
+  )
+```
 
 ## Saving our tidied data
 
@@ -456,10 +626,8 @@ To ensure higher protection for our raw data, we will tell R to save the tidied 
 The data itself will be saved with the `write.csv()` command. We include the directory path, and the our desired file name in the quotation marks. It is also very important that we finish our file name with "`.csv`", so that our finished data is correctly assigned to a csv format.
 
 ```{r}
-
+write.csv(data_12, "Tidied_Data/tidy_data.csv")
 ```
-
-
 
 
 ## References/Useful reading
