@@ -21,15 +21,18 @@ pacman::p_load(missMethods) # Missing data methods and imputing missing data
 
 Welcome to our workshop on Data Wrangling and Data Manipulation in R. In today's session we will work on generating systematic and reproducible workflows on data tidying. Our dataset for today consists of fictional data collected from Qualtrics. It has been designed to provide us with a range of challenges we have to work with as researchers as we prepare our data for analysis.
 
-Our aims for today:
+**Our aims for today:**
 
 1.  Understand what tidy data is.
-2.  Filtering data in accordance with eligibility criteria and consent agreements.
-3.  Standardising messy text data.
-4.  Creating total values.
-5.  Removing bots.
-6.  Working with longitudinal data/repeated measures.
-7.  Exporting our data.
+2.  Working with longitudinal data/repeated measures.
+3.  Inspecting our data
+4.  Filtering data in accordance with eligibility criteria and consent agreements.
+5.  Standardising messy text data.
+6.  Removing bots.
+7.  Working with missing data
+8.  Creating total values.
+9.  Long data to wide data/wide data to long data
+10. Exporting our data.
 
 Our dataset is taken from an imaginary study on elite athletes. We provided them with some demographic questions, the Athlete Identity Measurement Scale, and an open ended question on what being an athlete means to them.
 
@@ -37,7 +40,7 @@ Our dataset is taken from an imaginary study on elite athletes. We provided them
 
 Before we tidy our data, we need to have an understanding of what tidy data is. Considering data tidying is a vital and influential precurser to any analysis, it is interesting how little attention is paid to this area in University Statistics Modules\* (\*I'm reffering to my Undergraduate University here, which was not the University of Edinburgh).
 
-For today, our interpretiation of tidy data is informed on the journal article on on [Tidy Data from Hadley Wickham](https://vita.had.co.nz/papers/tidy-data.pdf). This is an excellent read, and provides a clear overview on making the process of data cleaning as easy and as effective as possible. The end goal is to create a dataset that follows these rules:
+For today, our interpretation of tidy data is informed on the journal article on on [Tidy Data from Hadley Wickham](https://vita.had.co.nz/papers/tidy-data.pdf). This is an excellent read, and provides a clear overview on making the process of data cleaning as easy and as effective as possible. The end goal is to create a dataset that follows these rules:
 
 -   Each variable is a column.
 -   Each observation is a row.
@@ -77,9 +80,9 @@ Job done!
 
 However, a quick check of the dataset will reveal that we have many variables we are not interested in for our analysis, or for our tidying. We want to declutter our space to make our life easier.
 
-This next step will use `%>%` (aka: the "pipe"). The pipe is an amazing tool for data tidying, as it allows us to link multiple commands and features straight to our data. Think of it as a command to R that translates to "Take this thing before me, and do the thing after me". 
+This next step will use `%>%` (aka: the "pipe"). The pipe is an amazing tool for data tidying, as it allows us to link multiple commands and features straight to our data. Think of it as a command to R that translates to "Take this thing before me, and do the thing after me".
 
-Here, we are going to pipe the output of the `head()` function into `gt()`. This will take the first 6 rows from `head()` and make it prettier and more navigable with `gt()`. 
+Here, we are going to pipe the output of the `head()` function into `gt()`. This will take the first 6 rows from `head()` and make it prettier and more navigable with `gt()`.
 
 ```{r}
 # Checking data
@@ -91,12 +94,11 @@ head(data) %>%  # head allows us view the first 6 rows
 
 Before moving further, we'll notice a number of columns here that may not be useful to us as researchers. So, to de-clutter our dataset, we going to focus on a selection of the variables we want with the `select()` function.
 
-To use `select()` we type the name of our dataset, pipe it (`%>%`) into `select()`, and write the variable names we want to keep. 
+To use `select()` we type the name of our dataset, pipe it (`%>%`) into `select()`, and write the variable names we want to keep.
 
 If you are working with a large dataset where only a small handful of variables need removing, we type the minus symbol (`-`) in-front of the variable we want to remove.
 
 In this case we are working with a smaller dataset, so will choose to keep what we want.
-
 
 ```{r}
 # Choosing our variables
@@ -134,9 +136,10 @@ head(data_1$Time_Point) #first 6 rows of Time_Point
 tail(data_1$Time_Point) #last 6 rows of Time_Point
 
 ```
+
 ## Working with repeated measures
 
-We will now import the data from our second data collection. The motivation here is a pragmatic one, as we can bind both data sets to simultaneously tidy both time points together. 
+We will now import the data from our second data collection. The motivation here is a pragmatic one, as we can bind both data sets to simultaneously tidy both time points together.
 
 ### Importing second dataset
 
@@ -167,7 +170,7 @@ T2_data_prep <- T2_data[-c(1,2), ]
 head(T2_data_prep)
 ```
 
-Now that our initial 2 rows are removed, we can bind the rows of this dataset vertically with our first dataset. We do this with `r.bind()` function. 
+Now that our initial 2 rows are removed, we can bind the rows of this dataset vertically with our first dataset. We do this with `r.bind()` function.
 
 ```{r}
 
@@ -182,7 +185,7 @@ tail(combined_data) %>% gt()
 
 ```
 
-*Note: this approach only works the questionnaire is identical at both time points. If there are differences in the questions asked, then you will need to prepare separate scripts for both dataset before merging.
+\*Note: this approach only works the questionnaire is identical at both time points. If there are differences in the questions asked, then you will need to prepare separate scripts for both dataset before merging.
 
 ## Inspecting the data
 
@@ -197,15 +200,16 @@ summary(combined_data) # summary to view summary of each variable
 glimpse(combined_data) # Describes data structure and shows first row
 ```
 
-Turns out its a mess. Everything is labelled as `character`. Whilst in reality, we know our data contains numerical values. Double checking with head() can help us see what is going on. 
+Turns out its a mess. Everything is labelled as `character`. Whilst in reality, we know our data contains numerical values. Double checking with head() can help us see what is going on.
 
 ```{r}
 head(combined_data) %>% gt()
 
 tail(combined_data) %>% gt()
 ```
+
 Turns out the first 2 rows contain meta data describing how the data was collected. This wont be useful for our analysis, and it's preventing us from working with our data. So we need to remove it. This will involve using `base R` coding. Generally, I prefer `tidyverse` coding, as it more functional, less cluttered, easier to communicate, and less code nerdy. But sometimes it is useful for quick easy fixes such as this.
- 
+
 ```{r}
 # removing second row with base R 
 
@@ -244,10 +248,9 @@ tail(data_3) %>% gt()
 
 ## Recoding values
 
-You will have noticed that some columns look like numbers, yet were not changed. This is because I know these values were originally categorical choices. 
+You will have noticed that some columns look like numbers, yet were not changed. This is because I know these values were originally categorical choices.
 
-Unfortunately, Qualtrics has translated them to numbers. We need to reassign their labels, so that we can more clearly understand what we are working with. 
-To help in the next step, we are going to open the "Use choice text" exported version from Qualtrics. This helps us identify the correct labels for recoding our data.
+Unfortunately, Qualtrics has translated them to numbers. We need to reassign their labels, so that we can more clearly understand what we are working with. To help in the next step, we are going to open the "Use choice text" exported version from Qualtrics. This helps us identify the correct labels for recoding our data.
 
 ```{r}
 
@@ -262,6 +265,7 @@ data_key <- data_key %>%
 
 summary(data_key) # viewing summary
 ```
+
 ## Combining the data
 
 Time to merge our data so that our response options can replace our old numeric responses. Now this next step is a little convoluted - I appreciate that. There are multiple functions being used together. Let's try to work through it step by step. Worst case scenario, you can copy and paste the code and update it to match your own work... Honestly, I wish I could find a simpler way to make this work! But for now, this does what I want it to do.
@@ -290,7 +294,7 @@ glimpse(data_4)
 
 ## Giving meaningful item names to columns
 
-Almost ready to filter the data. However, it's becoming apparent that the column names are all vague. This is a recipe for mistakes. It is best practice to have meaningful and clear variable names - as a bonus: in R we have no character length limits, so names can be as long as we need them to be. 
+Almost ready to filter the data. However, it's becoming apparent that the column names are all vague. This is a recipe for mistakes. It is best practice to have meaningful and clear variable names - as a bonus: in R we have no character length limits, so names can be as long as we need them to be.
 
 Time to fix the issue.
 
@@ -308,7 +312,7 @@ column_names
 
 ### Relabelling data
 
-Now that we are clearer on our data labels, it's time to rename using the `rename()` function. We first decide our new column name, and then align it with the old column name. 
+Now that we are clearer on our data labels, it's time to rename using the `rename()` function. We first decide our new column name, and then align it with the old column name.
 
 ```{r}
 
@@ -337,23 +341,17 @@ data_5 <- data_4 %>%
 summary(data_5)
 ```
 
-
 ## Initial filtering of data
 
-In a perfect world, only eligible participants would be part of our data. Everyone will have provided their consent before filling out their surveys, and only unwanted participants will not have taken part. 
+In a perfect world, only eligible participants would be part of our data. Everyone will have provided their consent before filling out their surveys, and only unwanted participants will not have taken part.
 
-Unfortunately, this is not always the case. And in our dataset today, it is most definitely not the case. 
+Unfortunately, this is not always the case. And in our dataset today, it is most definitely not the case.
 
-Now for our example dataset, lets imagine you are all researchers on mental health in elite sport like me (how lucky!). Our research is focused specifically on elite athletes who competed at **International** level. We don't want anyone else. Additionally, due to ethical obligations, only participants aged 18+ were allowed to participate. Finally, we are legally obliged to only analyse the data of participants who fully consented to have their data analysed. We also want to remove any participants with suspiciously quick completion times, as well as potential bots. 
+Now for our example dataset, lets imagine you are all researchers on mental health in elite sport like me (how lucky!). Our research is focused specifically on elite athletes who competed at **International** level. We don't want anyone else. Additionally, due to ethical obligations, only participants aged 18+ were allowed to participate. Finally, we are legally obliged to only analyse the data of participants who fully consented to have their data analysed. We also want to remove any participants with suspiciously quick completion times, as well as potential bots.
 
-Filtering in R uses logic rules:
-- To keep values that match our requirement, we use `==`.
-- To remove values that do not match our requirement, we use `!=`.
-- Numeric values can be filtered using greater than `>`, equal or greater than `>=`, equal to `==`, not equal to `!=`, less than `<`, and equal or less than `<=`.
-- We can use a combination of AND (`&`) and/or OR (`|`) commands to string together multiple filtering rules.
-- The comma (`,`) will also be interpreted as AND (`&`) when used in filter().
+Filtering in R uses logic rules: - To keep values that match our requirement, we use `==`. - To remove values that do not match our requirement, we use `!=`. - Numeric values can be filtered using greater than `>`, equal or greater than `>=`, equal to `==`, not equal to `!=`, less than `<`, and equal or less than `<=`. - We can use a combination of AND (`&`) and/or OR (`|`) commands to string together multiple filtering rules. - The comma (`,`) will also be interpreted as AND (`&`) when used in filter().
 
-For filtering, we can either filter in stages, or all at once: It really depends on what you need to do. 
+For filtering, we can either filter in stages, or all at once: It really depends on what you need to do.
 
 My preference is to combine multiple filters to any requirements on eligibility and ethical data use. From there, I will apply additional filters if needed.
 
@@ -385,12 +383,11 @@ unique(data_6$Country)
 
 We might have noticed that we have a mess of country names - participants got to type for themselves, and so there is inconsistency in how the data is presented:
 
-- Some participants may use country codes, others the country names
-- Some participants may use their own language here
-- Some participants will use lower case, others will start with upper case.
+-   Some participants may use country codes, others the country names
+-   Some participants may use their own language here
+-   Some participants will use lower case, others will start with upper case.
 
-
-This can be a painful step that will take some detective work. However, it does present an opportunity to spot jokers/bots in the data. 
+This can be a painful step that will take some detective work. However, it does present an opportunity to spot jokers/bots in the data.
 
 Our first step is to inspect the results
 
@@ -417,11 +414,11 @@ data_7 <- data_6 %>%
 
 Now we have removed bots, its time to standardise our country names, so that we can use the data with less errors and more efficency. We will do this multiple steps.
 
-1) We will convert all values to lower case (for consistency) and to character values.
-2) We will make a new column for country codes.
-3) We will check for alternative spellings.
-4) We will assign our `Country` values to our new `Country_code` column.
-5) We will transform our `County_code` column to be a factor, so that we can summarise the data with greater ease.
+1)  We will convert all values to lower case (for consistency) and to character values.
+2)  We will make a new column for country codes.
+3)  We will check for alternative spellings.
+4)  We will assign our `Country` values to our new `Country_code` column.
+5)  We will transform our `County_code` column to be a factor, so that we can summarise the data with greater ease.
 
 #### Making lower case
 
@@ -434,6 +431,7 @@ data_8 <- data_7 %>%
 unique(data_8$Country)
 
 ```
+
 #### Creating Country Code Variable
 
 ```{r}
@@ -459,12 +457,11 @@ data_9 <- data_8 %>%
 summary(data_9$Country_code)
 ```
 
-
 ## Checking missing values
 
-Missing values are complex to deal with. They can bias our results if we remove them. They can bias our results if we impute new values to address them. What's more, they can decimate our power if we exclude them. 
+Missing values are complex to deal with. They can bias our results if we remove them. They can bias our results if we impute new values to address them. What's more, they can decimate our power if we exclude them.
 
-Here, we will be using tools from the useful [`naniar`](https://naniar.njtierney.com/) package to help us understand our missing data. 
+Here, we will be using tools from the useful [`naniar`](https://naniar.njtierney.com/) package to help us understand our missing data.
 
 ```{r}
 # Statistical test of missing data to determine patterns of randomness
@@ -498,9 +495,9 @@ ggplot(data_9,
   geom_miss_point()
 ```
 
-So what can we notice from all of this? 
+So what can we notice from all of this?
 
-Well for one, we would lose 25% of our data if we exclude the missing cases. 
+Well for one, we would lose 25% of our data if we exclude the missing cases.
 
 Second, all the missing values are localised in the 7th question - The items that asks participants the extent they agree with the following statement: "I would be very depressed if I were injured and could not compete in sport.".
 
@@ -510,7 +507,7 @@ And lastly - the missing values are all found at the higher score end of the rem
 
 Under conditions where removing missing data can bias results or detrimentally impact our sample size, we need to consider imputation methods. A useful start location for this topic is [the Applied Missing Data Analysis (2nd edition) by Craig Enders](https://www.appliedmissingdata.com/). There is also a useful decision tree on working with missing data by [Woods et al (2021)](https://osf.io/preprints/psyarxiv/mdw5r).
 
-When using psychomtric measures, the row-wise mean imputation method can perform just as effectively as more complex MICE imputation methods. Whatsmore the code and the results are much easier to comprehend. And we can still keep track of which values were originally missing using `naniar` `bind_shadow()` function. 
+When using psychomtric measures, the row-wise mean imputation method can perform just as effectively as more complex MICE imputation methods. Whatsmore the code and the results are much easier to comprehend. And we can still keep track of which values were originally missing using `naniar` `bind_shadow()` function.
 
 ### Missing data label
 
@@ -519,11 +516,11 @@ data_10 <- data_9 %>% bind_shadow()
 summary(data_10)
 ```
 
-### Imputing with row-wise/individual mean 
+### Imputing with row-wise/individual mean
 
-For demonstrative purposes, we are going to impute (stats word for replace) the missing values with person level mean value. Note that the reccomended best practice is to use imputation methods such as [Multiple Imputation Chained Equations (MICE)](https://amices.org/mice/) or [Full Information Maximum Likelihood (FIML)](https://real-statistics.com/handling-missing-data/full-information-maximum-likelihood-fiml/) - but these are very complex techniques to run correctly. 
+For demonstrative purposes, we are going to impute (stats word for replace) the missing values with person level mean value. Note that the reccomended best practice is to use imputation methods such as [Multiple Imputation Chained Equations (MICE)](https://amices.org/mice/) or [Full Information Maximum Likelihood (FIML)](https://real-statistics.com/handling-missing-data/full-information-maximum-likelihood-fiml/) - but these are very complex techniques to run correctly.
 
-However, it has been argued that using person level mean can be appropriate when using Likert response meausres, so long as it is used within the scale/subscale of the measure [(Shrive et al., 2006)](https://link.springer.com/article/10.1186/1471-2288-6-57). Our motivation for using it today is that it allows for simpler and clearer communication of the imputation method whilst also providing plausible imputation results. 
+However, it has been argued that using person level mean can be appropriate when using Likert response meausres, so long as it is used within the scale/subscale of the measure [(Shrive et al., 2006)](https://link.springer.com/article/10.1186/1471-2288-6-57). Our motivation for using it today is that it allows for simpler and clearer communication of the imputation method whilst also providing plausible imputation results.
 
 ```{r}
 ### Step 1 - gather AIMS items
@@ -565,14 +562,13 @@ ggplot(data_11,
   labs(title = "Imputed values plot")
 ```
 
-
 ## Calculating composite measures
 
-There are times in research where we need to calculate composite scores to use our measures. This is common in psychology where we use psychometrics questionnaires, which measure psychological constructs with multiple items. 
+There are times in research where we need to calculate composite scores to use our measures. This is common in psychology where we use psychometrics questionnaires, which measure psychological constructs with multiple items.
 
-In this example questionnaire, we are using the [Athlete Identity Measurement Scale (AIMS)](INSERT LINK). AIMS approximates the strength to which an individual aligns themselves to an Athletic Identity across 7 different questions. These 7 items are measured on a 5 point Likert scale, ranging from "1" (Not at all), to "5" (All the time) DOUBLE CHECK. To use the scale, we need to add the scores of all 7 items together. 
+In this example questionnaire, we are using the [Athlete Identity Measurement Scale (AIMS)](https://krex.k-state.edu/items/4ed7755a-7b67-4948-a8c7-8dac9f354c58). AIMS approximates the strength to which an individual aligns themselves to an Athletic Identity across 7 different questions. These 7 items are measured on a 5 point Likert scale, ranging from "1" (Not at all), to "5" (All the time) DOUBLE CHECK. To use the scale, we need to add the scores of all 7 items together.
 
-Once again, we will achieve the summing of our items with the `mutate()` function.  
+Once again, we will achieve the summing of our items with the `mutate()` function.
 
 Note: We must do this step after inspecting missing data in our measures, as the total score will not account for missing values across the items.
 
@@ -582,13 +578,14 @@ data_12 <- data_11 %>%
 
 summary(data_12$AIMS_total)
 ```
+
 ## Long to Wide, and back to long again
 
-Now its time to play with reformatting our data. For the majority of the time when we work in R, we want our data to be in the long format - and so far it is. This makes it easier for us to communicate to R what we want it to do. However, there are times when we might need our data to be wide. And so, being able to convert our data between wide and long is useful. 
+Now its time to play with reformatting our data. For the majority of the time when we work in R, we want our data to be in the long format - and so far it is. This makes it easier for us to communicate to R what we want it to do. However, there are times when we might need our data to be wide. And so, being able to convert our data between wide and long is useful.
 
 ### Long to wide transformation
 
-For transforming our data from its current long format into a wide format, we will be using the `pivot_wider()` function. 
+For transforming our data from its current long format into a wide format, we will be using the `pivot_wider()` function.
 
 ```{r}
 
@@ -607,7 +604,7 @@ view(wide_data)
 
 ### Wide back to long
 
-Just as we transformed from long to wide, lets go back from wide to long with `pivot_longer()`. 
+Just as we transformed from long to wide, lets go back from wide to long with `pivot_longer()`.
 
 ```{r}
 long_data <- wide_data %>%
@@ -629,9 +626,18 @@ The data itself will be saved with the `write.csv()` command. We include the dir
 write.csv(data_12, "Tidied_Data/tidy_data.csv")
 ```
 
+## References/Useful resources
 
-## References/Useful reading
+Brewer, B. W., & Cornelius, A. E. (2001). Norms and factorial invariance of the Athletic Identity Measurement Scale (AIMS).
 
 Dasu, T., & Johnson, T. (2003). Exploratory data mining and data cleaning. John Wiley & Sons.
 
+Shrive, F. M., Stuart, H., Quan, H., & Ghali, W. A. (2006). Dealing with missing data in a multi-question depression scale: a comparison of imputation methods. BMC medical research methodology, 6, 1-10.
+
 [Wickham, H. (2014). Tidy data. Journal of statistical software, 59, 1-23](https://vita.had.co.nz/papers/tidy-data.pdf)
+
+[Applied Missing Data Analysis (2nd edition) by Craig Enders](https://www.appliedmissingdata.com/)
+
+[Data Carpentry - Wrangling with tidyr](https://datacarpentry.org/r-socialsci/04-tidyr.html)
+
+[R for Data Science](https://r4ds.had.co.nz/index.html).
