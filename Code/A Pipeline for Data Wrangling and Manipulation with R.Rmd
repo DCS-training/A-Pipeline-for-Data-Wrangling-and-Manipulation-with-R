@@ -250,25 +250,11 @@ tail(data_3) %>% gt()
 
 You will have noticed that some columns look like numbers, yet were not changed. This is because I know these values were originally categorical choices.
 
-Unfortunately, Qualtrics has translated them to numbers. We need to reassign their labels, so that we can more clearly understand what we are working with. To help in the next step, we are going to open the "Use choice text" exported version from Qualtrics. This helps us identify the correct labels for recoding our data.
+Unfortunately, Qualtrics has translated them to numbers. We need to reassign their labels, so that we can more clearly understand what we are working with. To help in the next step, we need to look back at our survey so we can spot our reference variables:
 
-```{r}
+![Screenshot of the survey response options](https://raw.github.com/DCS-training/A-Pipeline-for-Data-Wrangling-and-Manipulation-with-R/main/images/Survey_Screenshot.jpg "Survey Screenshot"){width="822"}
 
-data_key <- read_csv("https://raw.github.com/DCS-training/A-Pipeline-for-Data-Wrangling-and-Manipulation-with-R/main/Data/TimePoint1_CDCS%20training%20dataset_text.csv") # uploading choice text version of data
-
-data_key <- data_key[-c(1,2), ] # removing first two rows again
-
-data_key <- data_key %>% 
-  select(Q4, Q7) %>% # selecting our variables
-  mutate(across(c(Q4, Q7), ~ as.factor(.)) # recoding as factors
-  )
-
-summary(data_key) # viewing summary
-```
-
-## Combining the data
-
-Time to merge our data so that our response options can replace our old numeric responses. Now this next step is a little convoluted - I appreciate that. There are multiple functions being used together. Let's try to work through it step by step. Worst case scenario, you can copy and paste the code and update it to match your own work... Honestly, I wish I could find a simpler way to make this work! But for now, this does what I want it to do.
+From there, we can update our values with `case_when()` inside of `mutate()`. Think of `case_when()` as a **if**/**else** style function. When a value aligns with our logic, we can give it a new value.
 
 ```{r}
 data_4 <- data_3 %>%
@@ -290,6 +276,61 @@ data_4 <- data_3 %>%
 summary(data_4)
 glimpse(data_4)
 
+```
+
+### Alternative automated approach
+
+The above approach works well if you have small datasets without too many options. However, it does still risk potential human error. We can work around this with a more technical approach by merging the numeric dataset provided by qualtrics with the text version.
+
+We will do this in 2 steps:
+
+\* First we will upload and merge the text data from both data collection time points.
+
+\* We will then replace the numeric responses with the text responses for the Q4 and Q7 items.
+
+#### Uploading and merging text based data
+
+```{r message = FALSE}
+
+
+# Uploading text option data
+
+data_key_T1 <- read_csv("https://raw.github.com/DCS-training/A-Pipeline-for-Data-Wrangling-and-Manipulation-with-R/main/Data/TimePoint1_CDCS%20training%20dataset_text.csv") 
+
+data_key_T2 <- read_csv("https://raw.github.com/DCS-training/A-Pipeline-for-Data-Wrangling-and-Manipulation-with-R/main/Data/TimePoint2_CDCS%20training%20dataset_text.csv")
+
+# Removing first two rows of both datasets
+
+data_key_T1 <- data_key_T1[-c(1,2), ] 
+data_key_T2 <- data_key_T2[-c(1,2), ]
+
+# Merging datasets
+
+data_key <- rbind(data_key_T1, data_key_T2)
+
+# Focusing on selected items
+  
+data_key <- data_key %>% 
+  select(Q4, Q7) %>% # selecting our variables
+  mutate(across(c(Q4, Q7), ~ as.factor(.)) # recoding as factors
+  )
+
+summary(data_key) # viewing summary
+```
+
+#### Replacing values
+
+Time to work with our data so that our response options can replace our old numeric responses. Here we will use the `cbind.na()` function so we can keep our NA values when binding the data. It belongs to the `qpcR` package (hence the `:::` at the start of the command). The reason we use this approach is that running `library(qcpR)` will cause conflicts with `tidyverse` functions. This approach allows to use the function we want, without disturbing the rest of our code.
+
+```{r}
+data_4 <- data_3 %>%
+  select(-Q4, -Q7) %>%  # Removing columns in data_3 that are in data_key
+  qpcR:::cbind.na( # bind columns whist keeping NA where necessary
+    data_key # binding data_key so we have text options.
+            )
+
+summary(data_4$Q4)
+summary(data_4$Q7)
 ```
 
 ## Giving meaningful item names to columns
